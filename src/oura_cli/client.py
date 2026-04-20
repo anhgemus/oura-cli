@@ -68,6 +68,12 @@ class OuraClient:
 
     def get(self, endpoint: str, params: dict | None = None, *, max_pages: int = 50) -> dict:
         """GET /v2/usercollection/<endpoint>, auto-paginating `next_token`."""
+        # Validate endpoint to prevent path traversal
+        if not endpoint or ".." in endpoint or "/" in endpoint:
+            raise ValueError(
+                f"invalid endpoint: {endpoint!r}. "
+                "Must be a single path segment (no '/' or '..')."
+            )
         base_url = f"{self.api_base}/{endpoint}"
         q = urllib.parse.urlencode(params or {})
         url = f"{base_url}?{q}" if q else base_url

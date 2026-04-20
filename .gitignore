@@ -18,6 +18,16 @@ htmlcov/
 # uv
 uv.lock.local
 
+# Secrets and credentials
+.env
+*.key
+*.pem
+*.p12
+*.keystore
+.secrets
+*.secret
+*.credentials
+
 # editors
 .vscode/
 .idea/

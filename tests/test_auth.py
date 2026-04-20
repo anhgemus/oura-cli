@@ -16,7 +16,6 @@ def test_load_token_from_env():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".pat", delete=False) as f:
         f.write("file_token")
         f.flush()
-        path = f.name
     try:
         os.environ["OURA_PAT"] = "env_token"
         os.environ.pop("OURA_PAT_FILE", None)

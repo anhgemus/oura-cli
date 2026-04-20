@@ -6,6 +6,7 @@ import json
 import os
 import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from .__version__ import __version__
 from .auth import load_token
@@ -42,9 +43,13 @@ def write_output(data, args) -> None:
 
 
 def make_client(args) -> OuraClient:
+    """Create an OuraClient from CLI args, forcing production api_base."""
+    from .client import API_BASE
+
     token = load_token(args.token)
     verbose_fn = (lambda u: print(f"GET {u}", file=sys.stderr)) if args.verbose else None
-    return OuraClient(token, verbose_fn=verbose_fn)
+    # CLI never exposes api_base override — force production URL
+    return OuraClient(token, api_base=API_BASE, verbose_fn=verbose_fn)
 
 
 # ── commands ─────────────────────────────────────────────────────────────────
@@ -85,7 +90,13 @@ def cmd_export(args) -> None:
     client = make_client(args)
     start, end = daterange(args.days, None)
     out_dir = args.out or f"./oura-export-{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-    os.makedirs(out_dir, exist_ok=True)
+    # Validate path traversal
+    resolved = Path(out_dir).resolve()
+    try:
+        resolved.relative_to(Path.cwd().resolve())
+    except ValueError:
+        sys.exit(f"error: --out must be inside the current directory, got {out_dir}")
+    os.makedirs(resolved, exist_ok=True)
 
     dated = [ep for ep in KNOWN_ENDPOINTS
              if ep not in {"personal_info", "heartrate", "interbeat_interval"}]
@@ -96,11 +107,11 @@ def cmd_export(args) -> None:
             data = client.get(ep, {"start_date": start, "end_date": end})
         except Exception as e:  # noqa: BLE001
             data = {"error": str(e)}
-        with open(os.path.join(out_dir, f"{ep}.json"), "w") as f:
+        with open(resolved / f"{ep}.json", "w") as f:
             json.dump(data, f, indent=2, default=str)
 
     print("  fetching personal_info...", file=sys.stderr)
-    with open(os.path.join(out_dir, "personal_info.json"), "w") as f:
+    with open(resolved / "personal_info.json", "w") as f:
         json.dump(client.get("personal_info"), f, indent=2, default=str)
 
     if args.include_hr:
@@ -109,7 +120,7 @@ def cmd_export(args) -> None:
             "start_datetime": f"{start}T00:00:00+00:00",
             "end_datetime":   f"{end}T23:59:59+00:00",
         })
-        with open(os.path.join(out_dir, "heartrate.json"), "w") as f:
+        with open(resolved / "heartrate.json", "w") as f:
             json.dump(data, f, indent=2, default=str)
 
     if args.include_ibi:
@@ -118,10 +129,10 @@ def cmd_export(args) -> None:
             "start_datetime": f"{start}T00:00:00+00:00",
             "end_datetime":   f"{end}T23:59:59+00:00",
         })
-        with open(os.path.join(out_dir, "interbeat_interval.json"), "w") as f:
+        with open(resolved / "interbeat_interval.json", "w") as f:
             json.dump(data, f, indent=2, default=str)
 
-    print(f"✓ exported {start}..{end} → {out_dir}")
+    print(f"✓ exported {start}..{end} → {resolved}")
 
 
 def cmd_get(args) -> None:

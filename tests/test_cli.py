@@ -17,7 +17,6 @@ def _fake_token(args):
 
 def test_parser_has_all_subcommands():
     parser = build_parser()
-    subparsers = [s.dest for s in parser._subparsers._actions if hasattr(s, "_parser_class")]
     # Collect actual subcommand names from the parser
     sub_names = set()
     for action in parser._subparsers._actions:
