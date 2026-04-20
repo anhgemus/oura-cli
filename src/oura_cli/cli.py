@@ -84,7 +84,7 @@ def cmd_summary(args) -> None:
 def cmd_export(args) -> None:
     client = make_client(args)
     start, end = daterange(args.days, None)
-    out_dir = args.out or f"./oura-export-{datetime.now():%Y%m%d_%H%M%S}"
+    out_dir = args.out or f"./oura-export-{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
     os.makedirs(out_dir, exist_ok=True)
 
     dated = [ep for ep in KNOWN_ENDPOINTS
@@ -112,6 +112,15 @@ def cmd_export(args) -> None:
         with open(os.path.join(out_dir, "heartrate.json"), "w") as f:
             json.dump(data, f, indent=2, default=str)
 
+    if args.include_ibi:
+        print("  fetching interbeat_interval...", file=sys.stderr)
+        data = client.get("interbeat_interval", {
+            "start_datetime": f"{start}T00:00:00+00:00",
+            "end_datetime":   f"{end}T23:59:59+00:00",
+        })
+        with open(os.path.join(out_dir, "interbeat_interval.json"), "w") as f:
+            json.dump(data, f, indent=2, default=str)
+
     print(f"✓ exported {start}..{end} → {out_dir}")
 
 
@@ -127,6 +136,12 @@ def cmd_get(args) -> None:
         params["start_date"], params["end_date"] = s, e
     for kv in args.param or []:
         k, _, v = kv.partition("=")
+        # Don't allow --param to shadow --start/--end
+        if k in {"start_date", "end_date"} and (args.start or args.end):
+            sys.stderr.write(
+                f"warning: --param {k}={v} ignored (conflicts with --start/--end)\n"
+            )
+            continue
         params[k] = v
     write_output(client.get(args.endpoint, params), args)
 
@@ -197,6 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--days", type=int, default=7)
     sp.add_argument("--out", help="output directory")
     sp.add_argument("--include-hr", action="store_true", help="also dump heartrate (big)")
+    sp.add_argument("--include-ibi", action="store_true", help="also dump interbeat_interval (huge)")
     sp.set_defaults(func=cmd_export)
 
     sp = sub.add_parser("get", help="low-level: hit any endpoint")

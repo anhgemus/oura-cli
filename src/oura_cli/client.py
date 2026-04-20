@@ -23,7 +23,7 @@ KNOWN_ENDPOINTS: tuple[str, ...] = (
 )
 
 
-class OuraError(RuntimeError):
+class OuraError(Exception):
     """Raised on non-2xx responses from the Oura API."""
 
     def __init__(self, status: int, endpoint: str, body: str = "") -> None:
@@ -54,12 +54,12 @@ class OuraClient:
         token: str,
         *,
         api_base: str = API_BASE,
-        timeout: int = 30,
+        timeout: float = 30.0,
         verbose_fn=None,
     ) -> None:
         if not token:
             raise ValueError("token is required")
-        self.token = token
+        self.token = token.strip()
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
         self._verbose = verbose_fn

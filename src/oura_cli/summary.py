@@ -1,7 +1,7 @@
 """One-glance daily summary — joins data from multiple endpoints."""
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from .client import OuraClient
 
@@ -97,7 +97,17 @@ def render_summary(summary: dict) -> str:
     out.append(base)
     out.append(f"           HR {s.get('avg_heart_rate','—')} (low {s.get('lowest_heart_rate','—')})"
                f"  HRV {s.get('avg_hrv','—')}  br {s.get('avg_breath','—')}")
-    out.append(f"           bed {(s.get('bedtime_start') or '—')[:16]} → wake {(s.get('bedtime_end') or '—')[:16]}")
+    # Parse bedtime/wake robustly — handle ISO 8601 with or without tz
+    def _short_ts(raw: str | None) -> str:
+        if not raw:
+            return "—"
+        # ISO 8601: "2024-11-18T23:47:00+00:00" → "2024-11-18T23:47"
+        try:
+            dt = datetime.fromisoformat(raw)
+            return dt.strftime("%Y-%m-%dT%H:%M")
+        except (ValueError, TypeError):
+            return raw[:16] if len(raw) >= 16 else raw
+    out.append(f"           bed {_short_ts(s.get('bedtime_start'))} → wake {_short_ts(s.get('bedtime_end'))}")
     out.append(f"Activity    {a.get('score','—'):>4}   steps {a.get('steps','—')}"
                f"   cal {a.get('active_calories','—')}/{a.get('total_calories','—')}")
     out.append(f"Stress      {st.get('day_summary','—')}   high {st.get('stress_high_s','—')}s"
