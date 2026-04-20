@@ -10,13 +10,32 @@ A simple, dependency-free CLI and Python client for the [Oura Ring v2 REST API](
 
 ## Install
 
+### With [uv](https://docs.astral.sh/uv/) (recommended)
+
 ```bash
-pip install oura-cli
-# or from source:
-git clone https://github.com/anhdinh/oura-cli && cd oura-cli && pip install -e .
+# run the CLI without installing:
+uvx oura-cli summary
+
+# or install into a persistent tool environment:
+uv tool install oura-cli
+oura summary
 ```
 
-Python 3.9+.
+### With pip
+
+```bash
+pip install oura-cli
+```
+
+### From source
+
+```bash
+git clone https://github.com/anhdinh/oura-cli && cd oura-cli
+uv sync                    # creates .venv with dev deps
+uv run oura summary        # or: source .venv/bin/activate && oura summary
+```
+
+Python 3.9+ required.
 
 ## Authenticate
 
@@ -131,21 +150,32 @@ Global flags: `--token PATH`, `-v/--verbose` (prints each request URL to stderr)
 
 ## Development
 
-```bash
-git clone https://github.com/anhdinh/oura-cli
-cd oura-cli
-pip install -e '.[dev]'
-pytest
-ruff check src tests
-```
-
-Releasing:
+This project uses [uv](https://docs.astral.sh/uv/) for environment and dependency management. Install uv first:
 
 ```bash
-# bump src/oura_cli/__version__.py, then:
-python -m build
-python -m twine upload dist/*
+curl -LsSf https://astral.sh/uv/install.sh | sh     # macOS / Linux
+# or: pipx install uv, brew install uv, etc.
 ```
+
+Then:
+
+```bash
+git clone https://github.com/anhdinh/oura-cli && cd oura-cli
+uv sync                         # create .venv, install project + dev deps
+uv run pytest                   # run tests
+uv run ruff check src tests     # lint
+uv run ruff check --fix src tests
+uv run oura summary             # run the CLI against your PAT
+```
+
+Building and publishing:
+
+```bash
+uv build                        # produces dist/*.whl and dist/*.tar.gz
+uv publish                      # uploads to PyPI (needs auth)
+```
+
+Bump the version in `src/oura_cli/__version__.py`, update `CHANGELOG.md`, tag, and push — the GitHub release workflow publishes automatically via PyPI trusted publishing.
 
 ## License
 

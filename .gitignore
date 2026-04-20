@@ -15,6 +15,9 @@ env/
 htmlcov/
 *.log
 
+# uv
+uv.lock.local
+
 # editors
 .vscode/
 .idea/

@@ -24,25 +24,34 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Utilities",
 ]
 dependencies = []
 
-[project.optional-dependencies]
+[project.urls]
+Homepage   = "https://github.com/anhdinh/oura-cli"
+Repository = "https://github.com/anhdinh/oura-cli"
+Issues     = "https://github.com/anhdinh/oura-cli/issues"
+"Oura API" = "https://cloud.ouraring.com/v2/docs"
+
+[project.scripts]
+oura = "oura_cli.cli:main"
+
+# ── uv configuration ─────────────────────────────────────────────────────────
+
+[dependency-groups]
 dev = [
     "pytest>=7",
     "pytest-cov>=4",
     "ruff>=0.5",
+    "build>=1.2",
 ]
 
-[project.urls]
-Homepage      = "https://github.com/anhdinh/oura-cli"
-Repository    = "https://github.com/anhdinh/oura-cli"
-Issues        = "https://github.com/anhdinh/oura-cli/issues"
-"Oura API"    = "https://cloud.ouraring.com/v2/docs"
+[tool.uv]
+default-groups = ["dev"]
 
-[project.scripts]
-oura = "oura_cli.cli:main"
+# ── build / tooling ──────────────────────────────────────────────────────────
 
 [tool.hatch.version]
 path = "src/oura_cli/__version__.py"
