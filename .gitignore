@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.tox/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+
+# editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# local data / secrets
+.oura_pat
+oura_token.json
+oura-export-*/
+*.csv
